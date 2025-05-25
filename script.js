@@ -2,6 +2,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyALtpXEH6dKLndE6HJLeCSTHRAfsU6w-MY",
     authDomain: "i-tech-online-store.firebaseapp.com",
     projectId: "i-tech-online-store",
+    storageBucket: "i-tech-online-store.appspot.com" // <-- Add this line
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -341,5 +342,56 @@ document.getElementById('deleteProductBtn').onclick = function() {
 function closeProductEditor() {
     document.getElementById('productEditorModal').style.display = 'none';
 }
+
+// About Us modal
+document.getElementById('aboutUsFooterLink').onclick = function(e) {
+    e.preventDefault();
+    document.getElementById('aboutUsModal').style.display = 'flex';
+}
+
+// Close About Us modal
+function closeAboutUs() {
+    document.getElementById('aboutUsModal').style.display = 'none';
+}
+
+// --- ADD PRODUCT LOGIC ---
+
+// Handle Add Product form submit (URL only, no file upload)
+document.getElementById('addProductForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('addProdName').value.trim();
+    const price = document.getElementById('addProdPrice').value.trim();
+    const description = document.getElementById('addProdDesc').value.trim();
+    const imageUrlInput = document.getElementById('addProdImageUrl').value.trim();
+    const msg = document.getElementById('addProductMsg');
+    msg.textContent = '';
+
+    if (!imageUrlInput) {
+        msg.style.color = 'red';
+        msg.textContent = 'Please provide an image URL (file upload is disabled).';
+        return;
+    }
+
+    try {
+        await db.collection('products').add({
+            name,
+            price,
+            description,
+            imageUrl: imageUrlInput
+        });
+        msg.style.color = 'green';
+        msg.textContent = 'Product added!';
+        setTimeout(() => {
+            document.getElementById('addProductModal').style.display = 'none';
+            msg.textContent = '';
+            document.getElementById('addProductForm').reset();
+            // Optionally clear preview if you use one
+            // document.getElementById('addProdPreview').style.display = 'none';
+        }, 1000);
+    } catch (err) {
+        msg.style.color = 'red';
+        msg.textContent = 'Error: ' + err.message;
+    }
+};
 
 
