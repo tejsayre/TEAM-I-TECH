@@ -89,18 +89,28 @@
   <div class="modal-content" style="max-width: 400px;">
     <h2>About Us</h2>
     <p style="margin-bottom:1rem;">
-      <strong>I-Tech Online Electronics Store </strong> is a school project and online electronics store designed to make shopping for gadgets and tech accessories easy. Our system allows users to browse, add to cart, and purchase products with a smooth and user-friendly experience.
+      <strong>I-Tech Online Electronics Store</strong> is a school project and online electronics store designed to make shopping for gadgets and tech accessories easy. Our system allows users to browse, add to cart, and purchase products with a smooth and user-friendly experience.
     </p>
     <div style="margin-bottom:1rem;">
       <h3 style="margin-bottom:0.5rem;">The Developers</h3>
       <ul style="list-style:none; padding:0;">
         <li style="margin-bottom:0.5rem;">
-          <strong>TJ</strong><br>
-          <span style="font-size:0.95em; color:#555;">Frontend Developer/Designer hipo sjgrwd<br> Backend Developer</span>
+          <strong>Sayre, TJ</strong><br>
+          <span style="font-size:0.95em; color:#555;">Frontend Developer/Designer<br>Backend Developer</span>
         </li>
-        <li>
-          <strong>Eugene</strong><br>
-          <span style="font-size:0.95em; color:#555;">Frontend Developer <br> Backend Developer</span>
+        <li style="margin-bottom:0.5rem;">
+          <strong>Araracap, Eugene</strong><br>
+          <span style="font-size:0.95em; color:#555;">Frontend Developer<br>Backend Developer<br>Dev Support</span>
+        </li>
+      </ul>
+      <h3 style="margin:1rem 0 0.5rem 0;">Supportive Friends</h3>
+      <ul style="list-style:none; padding:0; text-align:center;">
+        <li style="margin-bottom:0.5rem;">
+          <strong>Pallarca, Irish Belle</strong><br>
+          <strong>Tuazon, Gabriel</strong><br>
+          <strong>Barcoma, Kyle</strong><br>
+          <strong>Ubaldo, Jeweck</strong><br>
+          <strong>Ragos, Jehil</strong><br>
         </li>
       </ul>
     </div>
@@ -116,7 +126,8 @@
       <input type="text" id="addProdDesc" placeholder="Description" required>
       <input type="text" id="addProdImageUrl" placeholder="Image URL (https://... or leave blank to upload)">
       <div style="margin:0.5rem 0;">or</div>
-      <input type="file" id="addProdImageFile" accept="image/*">
+      <!-- Just hide the file input so users can't select files -->
+<input type="file" id="addProdImageFile" accept="image/*" style="display:none;">
       <img id="addProdPreview" src="" alt="Preview" style="width:80px;display:none;margin-bottom:1rem;">
       <div style="display:flex;gap:1rem;justify-content:center;">
         <button type="submit" class="btn">Add Product</button>
