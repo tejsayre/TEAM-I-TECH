@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I-Tech Online Electronics Store</title>
+    <link rel="icon" type="image/png" href="pictures/itech logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+ 
+<body>
+        <!-- login -->
+<div id="authModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2>Login Required</h2>
+    <input id="username" type="text" placeholder="Email" class="modal-input"><br>
+    <input id="password" type="password" placeholder="Password" class="modal-input"><br>
+    <div class="modal-btn-row">
+      <button onclick="login()" class="btn modal-btn">Login</button>
+      <button onclick="signup()" class="btn modal-btn">Sign Up</button>
+    </div>
+    <button onclick="closeModal()" class="btn modal-close-btn">Close</button>
+    <div id="authMsg" class="modal-msg"></div>
+  </div>
+</div>
+    <!-- nav -->
+    <nav class="navbar">
+        <div class="logo">
+    <img src="pictures/itech logo.png" alt="I-Tech Logo" style="height:40px;">
+        </div>
+    <div class="nav-links">
+            <a href="#" id="homeBtn"><i class="fa fa-home"></i> Home</a>
+            <a href="#products"><i class="fa fa-box"></i> Products</a>
+            <a href="#cart" id="cartNav"><i class="fa fa-shopping-cart"></i> Cart <span id="cartCount">0</span></a>
+            <a href="#orderHistory" id="orderHistoryLink"><i class="fa fa-clock-rotate-left"></i> Order History</a>
+        </div>
+       <button class="btn" id="loginBtn" onclick="document.getElementById('authModal').style.display='flex'">Login | Sign Up</button>
+<span id="userDisplay" style="margin-left:1rem; font-weight:bold; color:var(--primary-green); display:none;">
+  Welcome, Admin!
+  <button id="logoutBtn" class="btn" style="margin-left:1rem; padding:2px 10px; font-size:0.95em; display:none;">Logout</button>
+</span>
+    </nav>
+
+    <section class="hero" id="home">
+    <h1>I-Tech Online Electronics Store</h1>
+    <p>An online store where you can easily browse, shop, and buy quality gadgets and tech accessories.</p>
+    </section>
+
+    <section class="products" id="products">
+    <h2 class="section-title">Our Products</h2>
+    <div id="productList" class="product-grid">
+  <!-- Product cards inserted here -->
+</div>
+    <div id="productLoader" style="display:flex;align-items:center;justify-content:center;height:180px;">
+  <div class="loader"></div>
+</div>
+</section>
+<button class="btn" id="addProductBtn" onclick="document.getElementById('addProductModal').style.display='flex'">Add Product</button>
+    <!-- footer -->
+    <footer id="contact">
+    <div class="footer-section">
+        <h3>Contact Us</h3>
+        <p>Email: eugenhelpdesk@email.com</p>
+        <p>Phone: (+63) 123-4567</p>
+    </div>
+    <div class="footer-section">
+        <h3><a href="#" id="aboutUsFooterLink">About Us</a></h3>
+    </div>
+    <div class="footer-section" style="text-align:center; width:100%;">
+        <span style="color:#ffffff;">&copy; 2025 I-Tech Online Electronics Store</span>
+    </div>
+</footer>
+
+<!-- notif popup  -->
+<div id="notification"></div>
+
+<!-- order history -->
+<div id="orderHistoryModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width:400px;">
+    <h2>Order History</h2>
+    <ul id="orderHistoryList" class="modal-list"></ul>
+    <button onclick="closeOrderHistory()" class="btn modal-close-btn">Close</button>
+  </div>
+</div>
+
+<!-- about us-->
+<div id="aboutUsModal" class="modal-overlay">
+  <div class="modal-content" style="max-width: 400px;">
+    <h2>About Us</h2>
+    <p style="margin-bottom:1rem;">
+      <strong>I-Tech Online Electronics Store </strong> is a school project and online electronics store designed to make shopping for gadgets and tech accessories easy. Our system allows users to browse, add to cart, and purchase products with a smooth and user-friendly experience.
+    </p>
+    <div style="margin-bottom:1rem;">
+      <h3 style="margin-bottom:0.5rem;">The Developers</h3>
+      <ul style="list-style:none; padding:0;">
+        <li style="margin-bottom:0.5rem;">
+          <strong>TJ</strong><br>
+          <span style="font-size:0.95em; color:#555;">Frontend Developer/Designer hipo sjgrwd<br> Backend Developer</span>
+        </li>
+        <li>
+          <strong>Eugene</strong><br>
+          <span style="font-size:0.95em; color:#555;">Frontend Developer <br> Backend Developer</span>
+        </li>
+      </ul>
+    </div>
+    <button onclick="closeAboutUs()" class="btn modal-close-btn">Close</button>
+  </div>
+</div>
+<!-- Add Product Modal -->
+<div id="addProductModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width:400px;">
+    <form id="addProductForm">
+      <input type="text" id="addProdName" placeholder="Product Name" required>
+      <input type="text" id="addProdPrice" placeholder="Price (e.g. ₱1000)" required>
+      <input type="text" id="addProdDesc" placeholder="Description" required>
+      <input type="text" id="addProdImageUrl" placeholder="Image URL (https://... or leave blank to upload)">
+      <div style="margin:0.5rem 0;">or</div>
+      <input type="file" id="addProdImageFile" accept="image/*">
+      <img id="addProdPreview" src="" alt="Preview" style="width:80px;display:none;margin-bottom:1rem;">
+      <div style="display:flex;gap:1rem;justify-content:center;">
+        <button type="submit" class="btn">Add Product</button>
+        <button type="button" onclick="document.getElementById('addProductModal').style.display='none'" class="btn modal-close-btn">Cancel</button>
+      </div>
+      <div id="addProductMsg" style="color:red;margin-top:0.5rem;"></div>
+    </form>
+  </div>
+</div>
+<!-- Product Editor Modal -->
+<div id="productEditorModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:400px;">
+    <h2>Edit Product</h2>
+    <form id="editProductForm">
+      <input type="text" id="editProdName" placeholder="Product Name" required>
+      <input type="text" id="editProdPrice" placeholder="Price (e.g. ₱1000)" required>
+      <input type="text" id="editProdDesc" placeholder="Description" required>
+      <input type="file" id="editProdImage">
+      <img id="editProdPreview" src="" alt="Preview" style="width:80px;display:none;margin-bottom:1rem;">
+      <div style="display:flex;gap:1rem;justify-content:center;">
+        <button type="submit" class="btn">Update</button>
+        <button type="button" id="deleteProductBtn" class="btn" style="background:#e53935;">Delete</button>
+        <button type="button" onclick="closeProductEditor()" class="btn modal-close-btn">Cancel</button>
+      </div>
+      <div id="editProductMsg" style="color:red;margin-top:0.5rem;"></div>
+    </form>
+  </div>
+</div>
+<!-- cart modal -->
+<div id="cartModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width:400px;">
+    <h2>Your Cart</h2>
+    <ul id="cartList" class="modal-list"></ul>
+    <div style="margin:1rem 0;">
+      <strong>Total: <span id="cartTotal">₱0</span></strong>
+    </div>
+    <button onclick="checkoutCart()" class="btn">Purchase</button>
+    <button onclick="closeCart()" class="btn modal-close-btn">Close</button>
+  </div>
+</div>
+<!-- Firebase App (core) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
