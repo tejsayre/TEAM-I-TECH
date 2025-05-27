@@ -9,14 +9,101 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-let orders = JSON.parse(localStorage.getItem('orders')) || [];
+// --- CART LOGIC ---
 
-// Update cart count in nav
+cart = JSON.parse(localStorage.getItem('cart')) || [];
+
 function updateCartCount() {
     document.getElementById('cartCount').textContent = cart.reduce((sum, item) => sum + item.qty, 0);
 }
-updateCartCount();
+
+function renderCart() {
+    const list = document.getElementById('cartList');
+    list.innerHTML = '';
+    let total = 0;
+    if (cart.length === 0) {
+        list.innerHTML = '<li style="text-align:center;color:#888;">Your cart is empty.</li>';
+    } else {
+        cart.forEach((item, idx) => {
+            const priceNum = parseInt(item.price.replace(/[^\d]/g, '')) * item.qty;
+            total += priceNum;
+            list.innerHTML += `
+                <li style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;border-bottom:1px solid #eee;padding-bottom:1rem;">
+                    <img src="${item.img}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;">${item.name}</div>
+                        <div style="color:#888;">${item.price}</div>
+                        <div style="margin-top:0.5rem;">
+                            <button onclick="changeQty(${idx},-1)" style="padding:2px 8px;">-</button>
+                            <span style="margin:0 8px;">${item.qty}</span>
+                            <button onclick="changeQty(${idx},1)" style="padding:2px 8px;">+</button>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:bold;">₱${priceNum.toLocaleString()}</div>
+                        <button onclick="removeFromCart(${idx})" style="margin-top:0.5rem;color:#e53935;background:none;border:none;font-size:1.2em;cursor:pointer;">Remove</button>
+                    </div>
+                </li>
+            `;
+        });
+    }
+    document.getElementById('cartTotal').textContent = '₱' + total.toLocaleString();
+}
+
+function removeFromCart(idx) {
+    cart.splice(idx, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    renderCart();
+    updateCartCount();
+}
+
+function changeQty(idx, delta) {
+    cart[idx].qty += delta;
+    if (cart[idx].qty < 1) cart[idx].qty = 1;
+    localStorage.setItem('cart', JSON.stringify(cart));
+    renderCart();
+    updateCartCount();
+}
+
+document.getElementById('cartNav').onclick = function(e) {
+    e.preventDefault();
+    renderCart();
+    document.getElementById('cartModal').style.display = 'flex';
+};
+
+function closeCart() {
+    document.getElementById('cartModal').style.display = 'none';
+}
+
+function checkoutCart() {
+    if (cart.length === 0) {
+        showNotification('Your cart is empty!');
+        return;
+    }
+    if (!auth.currentUser) {
+        showNotification('You must be logged in to place an order!');
+        return;
+    }
+    const order = {
+        uid: auth.currentUser.uid,
+        items: [...cart],
+        date: new Date().toLocaleString(),
+        total: document.getElementById('cartTotal').textContent
+    };
+    db.collection('orderHistory').add(order)
+      .then(() => {
+          showNotification('Order placed!');
+          cart = [];
+          localStorage.setItem('cart', JSON.stringify(cart));
+          console.log('Cart after purchase:', cart, localStorage.getItem('cart'));
+          updateCartCount();
+          renderCart();
+          document.getElementById('cartList').innerHTML = '<li style="text-align:center;color:#888;">Your cart is empty.</li>';
+          document.getElementById('cartTotal').textContent = '₱0';
+          closeCart();
+      })
+      .catch(err => showNotification('Order failed: ' + err.message));
+}
 
 // Modal functions
 function showModal() {
@@ -45,6 +132,7 @@ function login() {
         .then(() => {
             closeModal();
             showNotification('Login successful!');
+            setTimeout(() => window.location.reload(), 800); // <-- Auto-refresh after login
         })
         .catch(error => {
             document.getElementById('authMsg').innerText = error.message;
@@ -80,6 +168,7 @@ function logout() {
         localStorage.removeItem('orders');
         updateCartCount();
         showNotification('Logged out!');
+        setTimeout(() => window.location.reload(), 800); // <-- Auto-refresh after logout
     });
 }
 
@@ -172,6 +261,7 @@ db.collection('products').onSnapshot(snapshot => {
     showProductLoader();
     const products = [];
     snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+    console.log('Fetched products:', products); // Add this line
     renderProducts(products);
     hideProductLoader();
 });
@@ -181,70 +271,6 @@ document.getElementById('homeBtn').addEventListener('click', function(e) {
     e.preventDefault();
     window.location.reload();
 });
-
-// --- CART MODAL LOGIC ---
-
-// Show cart modal
-document.getElementById('cartNav').onclick = function(e) {
-    e.preventDefault();
-    renderCart();
-    document.getElementById('cartModal').style.display = 'flex';
-};
-
-// Render cart items
-function renderCart() {
-    const list = document.getElementById('cartList');
-    list.innerHTML = '';
-    let total = 0;
-    cart.forEach((item, idx) => {
-        const priceNum = parseInt(item.price.replace(/[^\d]/g, '')) * item.qty;
-        total += priceNum;
-        list.innerHTML += `
-            <li style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
-                <img src="${item.img}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;">
-                <span style="flex:1;">${item.name} x${item.qty}</span>
-                <span>₱${priceNum.toLocaleString()}</span>
-                <button onclick="removeFromCart(${idx})" style="margin-left:0.5rem;color:#e53935;background:none;border:none;font-size:1.2em;cursor:pointer;">&times;</button>
-            </li>
-        `;
-    });
-    document.getElementById('cartTotal').textContent = '₱' + total.toLocaleString();
-}
-
-// Remove item from cart
-function removeFromCart(idx) {
-    cart.splice(idx, 1);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    renderCart();
-    updateCartCount();
-}
-
-// Close cart modal
-function closeCart() {
-    document.getElementById('cartModal').style.display = 'none';
-}
-
-// Checkout cart
-function checkoutCart() {
-    if (cart.length === 0) {
-        showNotification('Your cart is empty!');
-        return;
-    }
-    // Save order
-    const order = {
-        items: [...cart],
-        date: new Date().toLocaleString(),
-        total: document.getElementById('cartTotal').textContent
-    };
-    orders.push(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
-    cart = [];
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    renderCart();
-    closeCart();
-    showNotification('Order placed!');
-}
 
 // --- ORDER HISTORY LOGIC ---
 
@@ -259,18 +285,32 @@ document.getElementById('orderHistoryLink').onclick = function(e) {
 function renderOrderHistory() {
     const list = document.getElementById('orderHistoryList');
     list.innerHTML = '';
-    if (orders.length === 0) {
-        list.innerHTML = '<li>No orders yet.</li>';
+    if (!auth.currentUser) {
+        list.innerHTML = '<li>Please log in to view your order history.</li>';
         return;
     }
-    orders.forEach(order => {
-        let items = order.items.map(i => `${i.name} x${i.qty}`).join(', ');
-        list.innerHTML += `<li>
-            <div><strong>${order.date}</strong></div>
-            <div>${items}</div>
-            <div>Total: ${order.total}</div>
-        </li>`;
-    });
+    db.collection('orderHistory')
+      .where('uid', '==', auth.currentUser.uid)
+      .orderBy('date', 'desc')
+      .get()
+      .then(snapshot => {
+          if (snapshot.empty) {
+              list.innerHTML = '<li>No orders yet.</li>';
+              return;
+          }
+          snapshot.forEach(doc => {
+              const order = doc.data();
+              let items = order.items.map(i => `${i.name} x${i.qty}`).join(', ');
+              list.innerHTML += `<li>
+                  <div><strong>${order.date}</strong></div>
+                  <div>${items}</div>
+                  <div>Total: ${order.total}</div>
+              </li>`;
+          });
+      })
+      .catch(err => {
+          list.innerHTML = `<li>Error loading orders: ${err.message}</li>`;
+      });
 }
 
 // Close order history modal
@@ -302,19 +342,9 @@ document.getElementById('editProductForm').onsubmit = function(e) {
     const name = document.getElementById('editProdName').value.trim();
     const price = document.getElementById('editProdPrice').value.trim();
     const description = document.getElementById('editProdDesc').value.trim();
-    let imageUrl = document.getElementById('editProdPreview').src;
+    // Use the preview image src as the imageUrl
+    const imageUrl = document.getElementById('editProdPreview').src;
 
-    // If a new image is selected, update the preview and use it (Base64 or URL)
-    const imageFile = document.getElementById('editProdImage').files[0];
-    if (imageFile) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imageUrl = e.target.result;
-            updateProductFirestore(productId, name, price, description, imageUrl);
-        };
-        reader.readAsDataURL(imageFile);
-        return;
-    }
     updateProductFirestore(productId, name, price, description, imageUrl);
 };
 
@@ -393,5 +423,28 @@ document.getElementById('addProductForm').onsubmit = async function(e) {
         msg.textContent = 'Error: ' + err.message;
     }
 };
+
+function showNotification(message) {
+    let notif = document.getElementById('notification');
+    if (!notif) {
+        notif = document.createElement('div');
+        notif.id = 'notification';
+        notif.style.position = 'fixed';
+        notif.style.top = '20px';
+        notif.style.right = '20px';
+        notif.style.background = 'var(--primary-green, #4CAF50)';
+        notif.style.color = '#fff';
+        notif.style.padding = '12px 24px';
+        notif.style.borderRadius = '6px';
+        notif.style.zIndex = 9999;
+        notif.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+        document.body.appendChild(notif);
+    }
+    notif.textContent = message;
+    notif.style.display = 'block';
+    setTimeout(() => {
+        notif.style.display = 'none';
+    }, 2000);
+}
 
 
