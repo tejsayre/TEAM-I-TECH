@@ -9,6 +9,12 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
+const ADMIN_EMAILS = [
+    "eugeneclement@gmail.com",
+    "test@gmail.com"
+    // Add more admin emails here
+];
+
 // --- CART LOGIC ---
 
 cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -173,7 +179,7 @@ function logout() {
 }
 
 // Auth UI state
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
     const userDisplay = document.getElementById('userDisplay');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -181,23 +187,42 @@ auth.onAuthStateChanged(user => {
         userDisplay.style.display = 'flex';
         logoutBtn.style.display = 'inline-block';
         loginBtn.style.display = 'none';
-        // Set only the text node (assumes: Welcome, Admin! <button ...>Logout</button>)
+        // Set greeting based on admin status
+        let greet = isAdmin() ? "Welcome, Admin!" : "Welcome, Customer!";
+        // If userDisplay has a text node, update it; otherwise, add one
         if (userDisplay.childNodes.length > 0) {
-            userDisplay.childNodes[0].textContent = "Welcome, Admin! ";
+            userDisplay.childNodes[0].textContent = greet + " ";
+        } else {
+            userDisplay.textContent = greet + " ";
+            userDisplay.appendChild(logoutBtn);
         }
     } else {
         loginBtn.style.display = 'inline-block';
         userDisplay.style.display = 'none';
         logoutBtn.style.display = 'none';
     }
+
+    // Always clear order history on login
+    if (user) {
+        const ordersSnapshot = await db.collection('orderHistory')
+            .where('uid', '==', user.uid)
+            .get();
+        const batch = db.batch();
+        ordersSnapshot.forEach(doc => batch.delete(doc.ref));
+        if (!ordersSnapshot.empty) {
+            await batch.commit();
+        }
+    }
+
     updateAddProductBtn();
+    updateOrderHistoryLink();
 });
 document.getElementById('logoutBtn').onclick = logout;
 
 // Show/hide Add Product button
 function updateAddProductBtn() {
     const btn = document.getElementById('addProductBtn');
-    if (auth.currentUser) {
+    if (isAdmin()) {
         btn.style.display = 'inline-block';
     } else {
         btn.style.display = 'none';
@@ -215,10 +240,14 @@ function renderProducts(products) {
             <h3 class="product-title">${product.name}</h3>
             <p class="product-price">${product.price}</p>
             <p>${product.description}</p>
-            ${auth.currentUser ? `
+            ${auth.currentUser && isAdmin() ? `
             <div class="product-actions">
                 <button class="btn add-to-cart-btn">Add to Cart</button>
                 <button class="btn update-btn" onclick="showUpdateProduct('${product.id}')">Update</button>
+            </div>
+            ` : auth.currentUser ? `
+            <div class="product-actions">
+                <button class="btn add-to-cart-btn">Add to Cart</button>
             </div>
             ` : ''}
         </div>`;
@@ -445,6 +474,19 @@ function showNotification(message) {
     setTimeout(() => {
         notif.style.display = 'none';
     }, 2000);
+}
+
+function isAdmin() {
+    return auth.currentUser && ADMIN_EMAILS.includes(auth.currentUser.email);
+}
+
+function updateOrderHistoryLink() {
+    const orderHistoryLink = document.getElementById('orderHistoryLink');
+    if (auth.currentUser) {
+        orderHistoryLink.style.display = 'inline-block';
+    } else {
+        orderHistoryLink.style.display = 'none';
+    }
 }
 
 
